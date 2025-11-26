@@ -56,13 +56,6 @@
   "build": {
     "appId": "com.evidenra.basic",
     "productName": "EVIDENRA BASIC",
-    "icon": "Logo.ico",
-    "extraResources": [
-      {
-        "from": "Logo.ico",
-        "to": "Logo.ico"
-      }
-    ],
     "directories": {
       "output": "release"
     },
@@ -81,6 +74,7 @@
       "artifactName": "EVIDENRA-BASIC-v7.6-GENESIS.exe"
     },
     "mac": {
+      "icon": "Logo.png",
       "target": {
         "target": "dmg",
         "arch": [
@@ -92,6 +86,7 @@
       "artifactName": "EVIDENRA-BASIC-v7.6-macOS-${arch}.dmg"
     },
     "linux": {
+      "icon": "Logo.png",
       "target": [
         {
           "target": "AppImage",

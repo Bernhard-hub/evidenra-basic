@@ -1,0 +1,85 @@
+name: Build EVIDENRA BASIC Multi-Platform Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            platform: win
+            artifact_name: EVIDENRA-BASIC-v7.6-GENESIS.exe
+            artifact_path: release/EVIDENRA-BASIC-v7.6-GENESIS.exe
+          - os: macos-latest
+            platform: mac
+            artifact_name: EVIDENRA-BASIC-macOS.dmg
+            artifact_path: release/*.dmg
+          - os: ubuntu-latest
+            platform: linux
+            artifact_name: EVIDENRA-BASIC-Linux.AppImage
+            artifact_path: release/*.AppImage
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production
+        run: npm run build-prod
+
+      - name: Build portable executable (${{ matrix.platform }})
+        run: npm run dist:${{ matrix.platform }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ matrix.artifact_path }}
+          draft: false
+          prerelease: false
+          body: |
+            ## EVIDENRA BASIC v7.6 - GENESIS Edition
+
+            ### Downloads
+            - **Windows**: EVIDENRA-BASIC-v7.6-GENESIS.exe (Portable)
+            - **macOS Intel**: EVIDENRA-BASIC-v7.6-macOS-x64.dmg
+            - **macOS Apple Silicon**: EVIDENRA-BASIC-v7.6-macOS-arm64.dmg
+            - **Linux**: EVIDENRA-BASIC-v7.6-Linux.AppImage
+
+            ### Features
+            - Qualitative Datenanalyse mit KI
+            - AKIH-Methodologie (Quantum Enhanced)
+            - Genesis Engine Integration
+            - PDF/TXT/DOCX Import
+            - Multi-Export (PDF, JSON, TXT)
+            - 30-Tage Testversion
+
+            ### Systemanforderungen
+            - Windows 10/11 (x64)
+            - macOS 11+ (Intel & Apple Silicon)
+            - Linux (x64, glibc 2.28+)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+release/
+
+# Trial data
+.evidenra_trial
+*.exe
+*.dmg
+*.AppImage
+*.tar.gz
+*.zip
+win-unpacked/
+linux-unpacked/
+mac/
+
+# Electron cache
+.electron-cache/
+
+# Logs
+*.log
+npm-debug.log*
+debug.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Environment
+.env
+.env.local
+
+# Build debug
+builder-debug.yml

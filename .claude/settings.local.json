@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Select-Object -First 10 FullName)",
+      "Bash(copy:*)",
+      "Bash(unzip:*)",
+      "Bash(npm run build:*)",
+      "Bash(dir /s /b EVIDENRA-Professional.exe)",
+      "Bash(powershell -Command \"(Get-Item ''EVIDENRA-Professional.exe'').Length / 1MB\")",
+      "Bash(gh run view:*)",
+      "Bash(git tag:*)",
+      "Bash(gh api:*)",
+      "Bash(xargs:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh release view:*)",
+      "Bash(gh release download:*)",
+      "Bash(dir:*)",
+      "Bash(npm run build-prod:*)",
+      "Bash(npm run dist:win:*)",
+      "Bash(powershell -Command \"(Get-Item ''EVIDENRA-Professional-v7.5-GENESIS.exe'').Length / 1MB\")",
+      "Bash(findstr:*)",
+      "Bash(powershell -Command \"(Get-Item ''release\\EVIDENRA-Professional-v7.6-GENESIS.exe'').Length / 1MB\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

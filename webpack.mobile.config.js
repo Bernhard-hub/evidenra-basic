@@ -8,8 +8,10 @@ module.exports = {
   target: 'web', // Changed from 'electron-renderer' to 'web' for mobile
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'renderer.js',
-    publicPath: './'
+    filename: '[name].[contenthash].js',
+    chunkFilename: '[name].[contenthash].chunk.js',
+    publicPath: './',
+    clean: true
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],

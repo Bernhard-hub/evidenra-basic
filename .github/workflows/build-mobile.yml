@@ -1,0 +1,218 @@
+name: Build Mobile Apps (iPad & Android Tablet)
+
+on:
+  push:
+    branches: [main, master]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ===========================================
+  # iOS Build (iPad) - Requires macOS
+  # ===========================================
+  build-ios:
+    name: Build iOS (iPad)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets for mobile
+        run: npm run build-mobile
+
+      - name: Add iOS platform
+        run: npx cap add ios || true
+
+      - name: Sync iOS project
+        run: npx cap sync ios
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install CocoaPods dependencies
+        run: |
+          cd ios/App
+          pod install
+
+      - name: Build iOS App (iPad optimized)
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/App.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            TARGETED_DEVICE_FAMILY="2"
+
+      - name: Export iOS Archive (unsigned IPA)
+        run: |
+          cd ios/App
+          mkdir -p build/ipa
+          xcodebuild -exportArchive \
+            -archivePath build/App.xcarchive \
+            -exportPath build/ipa \
+            -exportOptionsPlist ../../ExportOptions.plist || true
+          # Fallback: Create unsigned IPA from archive
+          if [ ! -f build/ipa/*.ipa ]; then
+            cd build/App.xcarchive/Products/Applications
+            mkdir -p Payload
+            cp -r App.app Payload/
+            zip -r ../../../../build/ipa/EVIDENRA-BASIC-v7.6-iPad.ipa Payload
+          fi
+
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EVIDENRA-BASIC-iPad
+          path: |
+            ios/App/build/ipa/*.ipa
+            ios/App/build/App.xcarchive
+          retention-days: 30
+
+  # ===========================================
+  # Android Build (Tablet) - Runs on Ubuntu
+  # ===========================================
+  build-android:
+    name: Build Android (Tablet)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets for mobile
+        run: npm run build-mobile
+
+      - name: Add Android platform
+        run: npx cap add android || true
+
+      - name: Sync Android project
+        run: npx cap sync android
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build Android APK (Release)
+        run: |
+          cd android
+          ./gradlew assembleRelease
+
+      - name: Build Android AAB (App Bundle for Play Store)
+        run: |
+          cd android
+          ./gradlew bundleRelease
+
+      - name: Rename artifacts
+        run: |
+          mkdir -p release
+          cp android/app/build/outputs/apk/release/app-release-unsigned.apk release/EVIDENRA-BASIC-v7.6-Android-Tablet.apk
+          cp android/app/build/outputs/bundle/release/app-release.aab release/EVIDENRA-BASIC-v7.6-Android-Tablet.aab || true
+
+      - name: Upload Android APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EVIDENRA-BASIC-Android-APK
+          path: release/EVIDENRA-BASIC-v7.6-Android-Tablet.apk
+          retention-days: 30
+
+      - name: Upload Android AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EVIDENRA-BASIC-Android-AAB
+          path: release/EVIDENRA-BASIC-v7.6-Android-Tablet.aab
+          retention-days: 30
+
+  # ===========================================
+  # Create Release (only on tags)
+  # ===========================================
+  create-release:
+    name: Create GitHub Release
+    needs: [build-ios, build-android]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -la artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: EVIDENRA BASIC v7.6 - Mobile Release
+          body: |
+            ## EVIDENRA BASIC v7.6 - GENESIS Edition
+
+            ### Mobile Releases
+
+            #### iPad (iOS)
+            - **EVIDENRA-BASIC-v7.6-iPad.ipa** - Unsigned IPA für iPad
+              - Erfordert Signierung mit Apple Developer Account oder TestFlight
+
+            #### Android Tablet
+            - **EVIDENRA-BASIC-v7.6-Android-Tablet.apk** - APK für direkte Installation
+              - Aktiviere "Unbekannte Quellen" in den Einstellungen
+            - **EVIDENRA-BASIC-v7.6-Android-Tablet.aab** - App Bundle für Google Play Store
+
+            ### Installation
+
+            **iPad:**
+            1. Lade die IPA-Datei herunter
+            2. Nutze AltStore, Sideloadly oder Xcode für die Installation
+            3. Oder: Signiere mit deinem Apple Developer Account
+
+            **Android Tablet:**
+            1. Lade die APK-Datei herunter
+            2. Aktiviere "Installation aus unbekannten Quellen" in den Einstellungen
+            3. Öffne die APK-Datei und installiere die App
+
+          files: |
+            artifacts/**/*.ipa
+            artifacts/**/*.apk
+            artifacts/**/*.aab
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

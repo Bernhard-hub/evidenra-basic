@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
 const path = require('path');
 const LicenseValidator = require('./licenseValidator');
 
@@ -8,6 +8,22 @@ let licenseValidator;
 // Initialize license validator with your Gumroad product ID
 const PRODUCT_ID = 'BAHleQbgEXcGPy68OhfynQ==';
 licenseValidator = new LicenseValidator(PRODUCT_ID);
+
+// Deep link protocol for auth callback
+const PROTOCOL = 'evidenra';
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [path.resolve(process.argv[1])]);
+  }
+} else {
+  app.setAsDefaultProtocolClient(PROTOCOL);
+}
+
+// Single instance lock - required for deep links on Windows
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+}
 
 // Apply essential command line switches for API access
 app.commandLine.appendSwitch('--disable-web-security');
@@ -415,6 +431,69 @@ ipcMain.handle('toggle-devtools', () => {
     }
   }
   return { isOpen: false };
+});
+
+// Handle deep link protocol on Windows
+app.on('second-instance', (event, commandLine) => {
+  // Find the deep link URL in command line args
+  const deepLinkUrl = commandLine.find(arg => arg.startsWith(`${PROTOCOL}://`));
+  if (deepLinkUrl) {
+    handleDeepLink(deepLinkUrl);
+  }
+
+  // Focus the main window
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+});
+
+// Handle deep link protocol on macOS
+app.on('open-url', (event, url) => {
+  event.preventDefault();
+  handleDeepLink(url);
+});
+
+// Process deep link URL and extract auth tokens
+function handleDeepLink(url) {
+  console.log('🔗 Deep link received:', url);
+
+  try {
+    // Parse the URL: evidenra://auth/callback?access_token=...&refresh_token=...
+    const urlObj = new URL(url);
+
+    // Try query params first (from website callback)
+    let accessToken = urlObj.searchParams.get('access_token');
+    let refreshToken = urlObj.searchParams.get('refresh_token');
+
+    // Fallback to hash params if not in query
+    if (!accessToken || !refreshToken) {
+      const hash = urlObj.hash.substring(1); // Remove #
+      const hashParams = new URLSearchParams(hash);
+      accessToken = hashParams.get('access_token');
+      refreshToken = hashParams.get('refresh_token');
+    }
+
+    console.log('📝 Parsed tokens - access:', accessToken ? 'found' : 'missing', 'refresh:', refreshToken ? 'found' : 'missing');
+
+    if (accessToken && refreshToken) {
+      console.log('✅ Auth tokens extracted from deep link');
+      // Send tokens to renderer
+      if (mainWindow && mainWindow.webContents) {
+        mainWindow.webContents.send('auth-callback', { access_token: accessToken, refresh_token: refreshToken });
+      }
+    } else {
+      console.error('❌ No auth tokens in deep link');
+    }
+  } catch (error) {
+    console.error('❌ Error parsing deep link:', error);
+  }
+}
+
+// IPC: Open external URL in default browser
+ipcMain.handle('open-external', async (event, url) => {
+  await shell.openExternal(url);
+  return { success: true };
 });
 
 console.log('📋 EVIDENRA BASIC main process loaded');

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import EvidenraApp from './App';
+import AuthWrapper from '../components/auth/AuthWrapper';
 import './styles.css';
 
 const container = document.getElementById('root');
@@ -9,4 +10,8 @@ if (!container) {
 }
 
 const root = createRoot(container);
-root.render(<EvidenraApp />);
+root.render(
+  <AuthWrapper>
+    <EvidenraApp />
+  </AuthWrapper>
+);

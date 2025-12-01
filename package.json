@@ -57,6 +57,7 @@
     "@capacitor/preferences": "^6.0.0",
     "@capacitor/splash-screen": "^6.0.0",
     "@capacitor/status-bar": "^6.0.0",
+    "@supabase/supabase-js": "^2.86.0",
     "@tabler/icons-react": "^3.34.1",
     "@tensorflow/tfjs": "^4.22.0",
     "autoprefixer": "^10.4.21",
@@ -71,7 +72,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "style-loader": "^4.0.0",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "zustand": "^5.0.8"
   },
   "build": {
     "appId": "com.evidenra.basic",
@@ -125,13 +127,25 @@
       "dist/**/*",
       "src/main/**/*",
       "src/preload/**/*",
-      "package.json"
+      "package.json",
+      "!**/node_modules/@napi-rs/canvas-android*",
+      "!**/node_modules/@napi-rs/canvas-linux*",
+      "!**/node_modules/@napi-rs/canvas-darwin*",
+      "!**/node_modules/@napi-rs/canvas-freebsd*",
+      "!**/node_modules/@napi-rs/canvas-arm*"
     ],
+    "npmRebuild": false,
     "extraMetadata": {
       "main": "src/main/main.js"
     },
     "asarUnpack": [
       "node_modules/pdfjs-dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "Logo.ico",
+        "to": "Logo.ico"
+      }
     ],
     "nsis": {
       "oneClick": false,

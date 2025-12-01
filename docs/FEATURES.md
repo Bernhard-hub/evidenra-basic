@@ -15,13 +15,25 @@
 ## 2. AKIH-Methodologie
 
 ### Was ist AKIH?
-AI-Assisted Key Insight Harvesting - eine wissenschaftlich fundierte Methode zur qualitativen Datenanalyse.
+**Adaptive KI Hermeneutik** - eine wissenschaftlich fundierte Methode zur KI-gestützten qualitativen Datenanalyse, entwickelt von Prof. Dr. Bernhard Strobl (KPH Edith Stein, Innsbruck).
+
+### Die vier Säulen
+- **A - Adaptive Kategorienbildung**: Dynamische Kategorienentwicklung durch Mensch-KI-Interaktion
+- **K - Künstliche Intelligenz**: Integration modernster NLP-Modelle für semantische Analyse
+- **I - Iterative Verfeinerung**: Zyklische Optimierung durch Evaluation und Refinement
+- **H - Hermeneutische Interpretation**: Bewahrung des hermeneutischen Zirkels und Kontextsensitivität
+
+### Die AKIH-Formel
+```
+AKIH = [Σ(wi × Di)]^α × NE^β × QA^γ × CI^δ × PR^ε
+```
+Der AKIH-Score quantifiziert die Qualität qualitativer Forschung über 10 Dimensionen.
 
 ### Phasen
 1. **Initiale Codierung**: Erste Durchsicht und Markierung
 2. **Kategorisierung**: Gruppierung verwandter Codes
 3. **Themenfindung**: Identifikation übergeordneter Muster
-4. **Validierung**: Überprüfung durch Multi-Experten-System
+4. **Validierung**: Überprüfung durch Multi-Experten-System (7-Persona)
 
 ### 7-Persona System
 | Persona | Rolle | Fokus |

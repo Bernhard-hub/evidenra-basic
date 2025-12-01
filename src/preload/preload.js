@@ -13,5 +13,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Trial management (Portable + Persistent)
   checkTrialStatus: () => ipcRenderer.invoke('check-trial-status'),
   // Console toggle
-  toggleDevTools: () => ipcRenderer.invoke('toggle-devtools')
+  toggleDevTools: () => ipcRenderer.invoke('toggle-devtools'),
+  // Open external URL in default browser
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
+});
+
+// Expose electron shell for opening URLs
+contextBridge.exposeInMainWorld('electron', {
+  shell: {
+    openExternal: (url) => ipcRenderer.invoke('open-external', url),
+  },
+  // Listen for auth callback from deep link
+  onAuthCallback: (callback) => {
+    ipcRenderer.on('auth-callback', (event, tokens) => {
+      callback(tokens);
+    });
+  },
 });

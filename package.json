@@ -78,7 +78,7 @@
     "appId": "com.evidenra.basic",
     "productName": "EVIDENRA BASIC",
     "directories": {
-      "output": "release"
+      "output": "releases/2025-12-05"
     },
     "win": {
       "icon": "Logo.ico",
@@ -92,7 +92,7 @@
       "signAndEditExecutable": false
     },
     "portable": {
-      "artifactName": "EVIDENRA-BASIC-v7.6-GENESIS.exe"
+      "artifactName": "EVIDENRA-Basic-${version}-Windows.exe"
     },
     "mac": {
       "icon": "Logo.png",
@@ -104,7 +104,7 @@
         ]
       },
       "category": "public.app-category.productivity",
-      "artifactName": "EVIDENRA-BASIC-v7.6-macOS-${arch}.dmg"
+      "artifactName": "EVIDENRA-Basic-${version}-macOS-${arch}.dmg"
     },
     "linux": {
       "icon": "Logo.png",
@@ -117,7 +117,7 @@
         }
       ],
       "category": "Office",
-      "artifactName": "EVIDENRA-BASIC-v7.6-Linux.AppImage"
+      "artifactName": "EVIDENRA-Basic-${version}-Linux.AppImage"
     },
     "publish": null,
     "buildDependenciesFromSource": false,
@@ -126,7 +126,9 @@
       "dist/**/*",
       "src/main/**/*",
       "src/preload/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/@napi-rs/**/*",
+      "!node_modules/@capacitor/**/*"
     ],
     "extraMetadata": {
       "main": "src/main/main.js"

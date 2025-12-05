@@ -7,14 +7,24 @@ release/
 
 # Trial data
 .evidenra_trial
-*.exe
-*.dmg
-*.AppImage
-*.tar.gz
-*.zip
+
+# Build artifacts (exclude from root, but allow in releases/)
+/*.exe
+/*.dmg
+/*.AppImage
+/*.tar.gz
+/*.zip
 win-unpacked/
 linux-unpacked/
 mac/
+releases/**/win-unpacked/
+releases/**/linux-unpacked/
+releases/**/mac/
+
+# Keep only the release binaries
+!releases/**/*.exe
+!releases/**/*.dmg
+!releases/**/*.AppImage
 
 # Electron cache
 .electron-cache/

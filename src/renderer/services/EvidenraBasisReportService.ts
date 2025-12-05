@@ -364,7 +364,7 @@ Erstelle einen vollständigen EVIDENRA-Methodologie-Bericht, der diese exakten Z
       },
 
       technicalInfrastructure: {
-        platform: "EVIDENRA Professional v3.0",
+        platform: "EVIDENRA Basic v3.0",
         aiModels: [userSettings?.aiModel || 'GPT-4o', 'Claude-3.5-Sonnet', 'Ollama'],
         version: "3.0 Quantum Enhanced"
       }

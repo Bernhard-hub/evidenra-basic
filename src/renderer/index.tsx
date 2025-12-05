@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import EvidenraApp from './App';
+import { GenesisSyncProvider } from './providers/GenesisSyncProvider';
 import './styles.css';
 
 const container = document.getElementById('root');
@@ -9,4 +10,8 @@ if (!container) {
 }
 
 const root = createRoot(container);
-root.render(<EvidenraApp />);
+root.render(
+  <GenesisSyncProvider>
+    <EvidenraApp />
+  </GenesisSyncProvider>
+);

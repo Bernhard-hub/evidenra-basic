@@ -249,7 +249,7 @@ export class CitationValidator {
         {
           signal: controller.signal,
           headers: {
-            'User-Agent': 'EvidenRA-Professional/1.0 (mailto:contact@evidenra.com)'
+            'User-Agent': 'EvidenRA-Basic/1.0 (mailto:contact@evidenra.com)'
           }
         }
       );

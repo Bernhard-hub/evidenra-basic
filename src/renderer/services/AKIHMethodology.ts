@@ -469,13 +469,13 @@ Zur Wahrung wissenschaftlicher Integrität wird die Rolle von KI explizit dokume
    * Get citation for AKIH method
    */
   static getCitation(): string {
-    return 'EVIDENRA Professional AKIH-Framework (2025). AI-gestützte Kategorisierung & Interpretation Humandaten. Version 1.0.';
+    return 'EVIDENRA Basic AKIH-Framework (2025). AI-gestützte Kategorisierung & Interpretation Humandaten. Version 1.0.';
   }
 
   /**
    * Get APA-formatted reference
    */
   static getAPAReference(): string {
-    return 'EVIDENRA Professional. (2025). AKIH-Framework: AI-gestützte Kategorisierung & Interpretation Humandaten (Version 1.0) [Computer software]. https://evidenra.com';
+    return 'EVIDENRA Basic. (2025). AKIH-Framework: AI-gestützte Kategorisierung & Interpretation Humandaten (Version 1.0) [Computer software]. https://evidenra.com';
   }
 }

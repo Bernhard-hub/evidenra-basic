@@ -1,85 +1,110 @@
-name: Build EVIDENRA BASIC Multi-Platform Release
+name: Build Mac & Linux
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
-
-permissions:
-  contents: write
+    inputs:
+      release_date:
+        description: 'Release date folder (e.g., 2025-12-05)'
+        required: true
+        default: '2025-12-05'
 
 jobs:
-  build:
-    name: Build ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-        include:
-          - os: windows-latest
-            platform: win
-            artifact_name: EVIDENRA-BASIC-v7.6-GENESIS.exe
-            artifact_path: release/EVIDENRA-BASIC-v7.6-GENESIS.exe
-          - os: macos-latest
-            platform: mac
-            artifact_name: EVIDENRA-BASIC-macOS.dmg
-            artifact_path: release/*.dmg
-          - os: ubuntu-latest
-            platform: linux
-            artifact_name: EVIDENRA-BASIC-Linux.AppImage
-            artifact_path: release/*.AppImage
-
+  build-mac:
+    runs-on: macos-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build production
-        run: npm run build-prod
-
-      - name: Build portable executable (${{ matrix.platform }})
-        run: npm run dist:${{ matrix.platform }}
+      - name: Build for macOS
+        run: npm run dist:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload to Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
         with:
-          files: ${{ matrix.artifact_path }}
-          draft: false
-          prerelease: false
-          body: |
-            ## EVIDENRA BASIC v7.6 - GENESIS Edition
+          name: macos-builds
+          path: |
+            releases/${{ github.event.inputs.release_date }}/*.dmg
+          retention-days: 30
 
-            ### Downloads
-            - **Windows**: EVIDENRA-BASIC-v7.6-GENESIS.exe (Portable)
-            - **macOS Intel**: EVIDENRA-BASIC-v7.6-macOS-x64.dmg
-            - **macOS Apple Silicon**: EVIDENRA-BASIC-v7.6-macOS-arm64.dmg
-            - **Linux**: EVIDENRA-BASIC-v7.6-Linux.AppImage
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
 
-            ### Features
-            - Qualitative Datenanalyse mit KI
-            - AKIH-Methodologie (Quantum Enhanced)
-            - Genesis Engine Integration
-            - PDF/TXT/DOCX Import
-            - Multi-Export (PDF, JSON, TXT)
-            - 30-Tage Testversion
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-            ### Systemanforderungen
-            - Windows 10/11 (x64)
-            - macOS 11+ (Intel & Apple Silicon)
-            - Linux (x64, glibc 2.28+)
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for Linux
+        run: npm run dist:linux
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-builds
+          path: |
+            releases/${{ github.event.inputs.release_date }}/*.AppImage
+          retention-days: 30
+
+  commit-releases:
+    needs: [build-mac, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-builds
+          path: releases/${{ github.event.inputs.release_date }}
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-builds
+          path: releases/${{ github.event.inputs.release_date }}
+
+      - name: Setup Git LFS
+        run: git lfs install
+
+      - name: Track large files with LFS
+        run: |
+          git lfs track "releases/**/*.dmg"
+          git lfs track "releases/**/*.AppImage"
+
+      - name: Commit and push releases
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .gitattributes
+          git add releases/
+          git commit -m "Add Mac & Linux builds for ${{ github.event.inputs.release_date }}" || echo "No changes to commit"
+          git push

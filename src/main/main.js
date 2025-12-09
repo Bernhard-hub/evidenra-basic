@@ -141,24 +141,9 @@ function createWindow() {
 app.whenReady().then(async () => {
   console.log('EVIDENRA BASIC v7.6 - Starting...');
 
-  // Check license or trial validity before creating window
-  const isLicenseValid = await licenseValidator.isLicenseValid();
-
-  if (isLicenseValid) {
-    console.log('✅ Valid license found');
-    createWindow();
-  } else {
-    // Check trial status
-    const trialStatus = await licenseValidator.checkTrialStatus();
-
-    if (trialStatus.isValid && trialStatus.daysLeft > 0) {
-      console.log(`🔓 Trial active: ${trialStatus.daysLeft} days remaining`);
-      createWindow();
-    } else {
-      console.log('❌ No valid license or trial - showing license dialog');
-      await showLicenseDialog();
-    }
-  }
+  // V7.6: Always create window immediately - authentication via beautiful CloudLoginModal in React
+  // No more ugly system dialogs - the app handles login/trial internally with beautiful UI
+  createWindow();
 });
 
 app.on('window-all-closed', () => {

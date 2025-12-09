@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=EVIDENRA BASIC
+Exec=AppRun --no-sandbox %U
+Terminal=false
+Type=Application
+Icon=evidenra-basic
+StartupWMClass=EVIDENRA BASIC
+X-AppImage-Version=7.6.0
+Comment=EVIDENRA BASIC - Qualitative Datenanalyse mit KI
+Categories=Office;

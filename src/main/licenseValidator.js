@@ -107,11 +107,16 @@ class LicenseValidator {
       return false;
     }
 
+    // Admin permanent license - never expires, no re-validation needed
+    if (licenseData.licenseKey === 'ADMIN-PERMANENT-LICENSE') {
+      return true;
+    }
+
     // Check if license was validated within the last 30 days
     const validatedAt = new Date(licenseData.validatedAt);
     const now = new Date();
     const daysDiff = (now - validatedAt) / (1000 * 60 * 60 * 24);
-    
+
     if (daysDiff > 30) {
       // Re-validate license without incrementing usage count
       const result = await this.validateLicense(licenseData.licenseKey, false);
@@ -197,12 +202,66 @@ class LicenseValidator {
   }
 
   async checkTrialStatus() {
-    return await this.initializeTrial();
+    // Only check existing trial, don't create new one
+    try {
+      const trialData = await this.loadTrialData();
+
+      if (!trialData) {
+        // No trial exists - return invalid without creating
+        return {
+          isValid: false,
+          daysLeft: 0,
+          reason: 'No trial started'
+        };
+      }
+
+      const hardwareId = HardwareIdGenerator.generate();
+
+      // Check hardware ID matches
+      if (trialData.hardwareId !== hardwareId) {
+        return {
+          isValid: false,
+          daysLeft: 0,
+          reason: 'Trial is locked to another computer'
+        };
+      }
+
+      // Check if trial expired
+      const now = Date.now();
+      const daysLeft = Math.ceil((trialData.expires - now) / (24 * 60 * 60 * 1000));
+
+      return {
+        isValid: now < trialData.expires,
+        daysLeft: Math.max(0, daysLeft),
+        hardwareId: trialData.hardwareId
+      };
+    } catch (error) {
+      console.error('Error checking trial status:', error);
+      return { isValid: false, daysLeft: 0, reason: error.message };
+    }
   }
 
   // 🚨 PRODUCTION: Enhanced License Validation with Computer Limit
   async validateLicenseProduction(licenseKey) {
     try {
+      // Admin permanent license - instant validation, no Gumroad check
+      if (licenseKey === 'ADMIN-PERMANENT-LICENSE') {
+        const licenseData = {
+          licenseKey,
+          hardwareId: 'ADMIN',
+          validated: true,
+          validatedAt: new Date().toISOString(),
+          uses: 0,
+          purchase: { email: 'admin@evidenra.com' }
+        };
+        await this.saveLicenseData(licenseData);
+        return {
+          valid: true,
+          data: licenseData,
+          message: 'Admin license activated - permanent access'
+        };
+      }
+
       const hardwareId = HardwareIdGenerator.generate();
 
       // Check existing license data

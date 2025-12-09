@@ -140,18 +140,25 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   console.log('EVIDENRA BASIC v7.6 - Starting...');
-  
-  // Temporarily skip license check - user will enter license in app settings
-  createWindow();
-  
-  // COMMENTED OUT: Check license validity before creating window
-  // const isLicenseValid = await licenseValidator.isLicenseValid();
-  // 
-  // if (!isLicenseValid) {
-  //   await showLicenseDialog();
-  // } else {
-  //   createWindow();
-  // }
+
+  // Check license or trial validity before creating window
+  const isLicenseValid = await licenseValidator.isLicenseValid();
+
+  if (isLicenseValid) {
+    console.log('✅ Valid license found');
+    createWindow();
+  } else {
+    // Check trial status
+    const trialStatus = await licenseValidator.checkTrialStatus();
+
+    if (trialStatus.isValid && trialStatus.daysLeft > 0) {
+      console.log(`🔓 Trial active: ${trialStatus.daysLeft} days remaining`);
+      createWindow();
+    } else {
+      console.log('❌ No valid license or trial - showing license dialog');
+      await showLicenseDialog();
+    }
+  }
 });
 
 app.on('window-all-closed', () => {
@@ -182,14 +189,28 @@ async function showLicenseDialog() {
     type: 'info',
     title: 'EVIDENRA BASIC - License Required',
     message: 'Please enter your license key to continue.',
-    detail: 'You need a valid license key to use EVIDENRA BASIC.',
-    buttons: ['Enter License Key', 'Exit'],
+    detail: 'You need a valid license key to use EVIDENRA BASIC. You can start a 30-day free trial.',
+    buttons: ['Enter License Key', 'Start 30-Day Trial', 'Exit'],
     defaultId: 0,
-    cancelId: 1
+    cancelId: 2
   });
 
   if (result.response === 0) {
     await showLicenseInputDialog();
+  } else if (result.response === 1) {
+    // Start trial
+    const trialStatus = await licenseValidator.initializeTrial();
+    if (trialStatus.isValid) {
+      console.log(`Trial started: ${trialStatus.daysLeft} days`);
+      createWindow();
+    } else {
+      await dialog.showMessageBox(null, {
+        type: 'error',
+        title: 'Trial Error',
+        message: trialStatus.reason || 'Could not start trial'
+      });
+      app.quit();
+    }
   } else {
     app.quit();
   }

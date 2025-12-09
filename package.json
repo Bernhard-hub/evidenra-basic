@@ -78,7 +78,7 @@
     "appId": "com.evidenra.basic",
     "productName": "EVIDENRA BASIC",
     "directories": {
-      "output": "releases/2025-12-05"
+      "output": "releases/2025-12-09"
     },
     "win": {
       "icon": "Logo.ico",

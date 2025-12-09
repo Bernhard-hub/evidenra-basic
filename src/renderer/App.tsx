@@ -84,6 +84,7 @@ import '../../genesis-engine/src/ui/GAPESAnalytics.css'; // 🧬 V3.0: GAPES Ana
 import { GenesisAPIWrapper } from '../../genesis-engine/src/GenesisAPIWrapper.js'; // 🧬 V2.0: GAPES - Autonomous Prompt Evolution
 import { IntegrationHelper } from '../../genesis-engine/src/IntegrationHelper.js'; // 🧬 V4.0: GAPES Integration Helper
 import { useGenesisSyncContext, CloudSyncIndicator, CloudLoginModal, CloudSyncStatusModal } from './providers/GenesisSyncProvider'; // ☁️ Cloud Sync
+import ServiceProxy, { THIN_CLIENT_MODE } from './services/ServiceProxy'; // 🚀 THIN CLIENT: Server-based analysis
 
 // PDF.js Worker Setup
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;

@@ -1,6 +1,6 @@
 /**
- * GENESIS SYNC PROVIDER - EVIDENRA BASIC
- * =======================================
+ * GENESIS SYNC PROVIDER
+ * =====================
  * React Context Provider für Genesis Sync Integration
  * Ermöglicht Cloud-Synchronisation zwischen PWA und Electron Apps
  */
@@ -8,7 +8,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { authService, profileService, type UserProfile } from '../services/supabase';
 import { genesisSync, type SyncStatus, type Project as SyncProject } from '../services/GenesisSyncService';
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 
 // ============================================
 // TYPES
@@ -126,6 +126,11 @@ export function GenesisSyncProvider({ children }: GenesisSyncProviderProps) {
           await genesisSync.initialize(session.user);
           if (mounted) {
             setIsCloudEnabled(true);
+        } else if (mounted) {
+          // No session - show login modal on first start
+          const skipped = sessionStorage.getItem('evidenra_login_skipped');
+          if (!skipped) {
+            setShowLoginModal(true);
           }
         }
       } catch (error) {
@@ -374,18 +379,18 @@ export function CloudLoginModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
       <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <span className="text-2xl">☁️</span>
-            EVIDENRA Cloud Sync
+            <span className="text-2xl">🧬</span>
+            Genesis Cloud Sync
           </h2>
           <button
             onClick={() => setShowLoginModal(false)}
-            className="text-gray-400 hover:text-white transition-colors text-2xl"
+            className="text-gray-400 hover:text-white transition-colors"
           >
-            ×
+            ✕
           </button>
         </div>
 
@@ -409,7 +414,7 @@ export function CloudLoginModal() {
         ) : (
           <>
             <p className="text-gray-400 mb-6">
-              Melde dich an um deine Projekte zwischen allen Geräten und Apps (PWA, Basic, Pro, Ultimate) zu synchronisieren.
+              Melde dich an um deine Projekte zwischen allen Geräten und Apps zu synchronisieren.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -438,10 +443,31 @@ export function CloudLoginModal() {
               </button>
             </form>
 
-            <div className="mt-6 pt-4 border-t border-gray-800">
-              <p className="text-gray-500 text-sm text-center">
+            <div className="mt-4 pt-4 border-t border-gray-800">
+              <p className="text-gray-500 text-xs text-center mb-3">
                 Kein Passwort nötig - du erhältst einen sicheren Login-Link per E-Mail.
               </p>
+
+              {/* Skip Login Button */}
+              <button
+                onClick={() => {
+                  sessionStorage.setItem('evidenra_login_skipped', 'true');
+                  setShowLoginModal(false);
+                }}
+                className="w-full py-2 text-gray-400 hover:text-white text-sm transition-colors"
+              >
+                Ohne Login fortfahren (nur lokal)
+              </button>
+            </div>
+
+            {/* Benefits Info */}
+            <div className="mt-4 p-3 bg-gray-800/50 rounded-lg">
+              <p className="text-xs text-gray-400 mb-2 font-medium">Mit Login kannst du:</p>
+              <ul className="text-xs text-gray-500 space-y-1">
+                <li>• Projekte zwischen Web-App & Desktop synchronisieren</li>
+                <li>• Bei Upgrade (Basic → Pro → Ultimate) Daten mitnehmen</li>
+                <li>• Auf allen Geräten arbeiten</li>
+              </ul>
             </div>
           </>
         )}
@@ -459,6 +485,7 @@ export function CloudSyncStatusModal() {
     showSyncStatus,
     setShowSyncStatus,
     user,
+    profile,
     syncStatus,
     subscription,
     signOut,
@@ -475,18 +502,18 @@ export function CloudSyncStatusModal() {
   if (!showSyncStatus || !user) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
       <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl max-h-[80vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <span className="text-2xl">☁️</span>
-            Cloud Sync Status
+            <span className="text-2xl">🧬</span>
+            Genesis Sync Status
           </h2>
           <button
             onClick={() => setShowSyncStatus(false)}
-            className="text-gray-400 hover:text-white transition-colors text-2xl"
+            className="text-gray-400 hover:text-white transition-colors"
           >
-            ×
+            ✕
           </button>
         </div>
 
@@ -532,7 +559,7 @@ export function CloudSyncStatusModal() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Client</p>
-              <p className="text-white">BASIC</p>
+              <p className="text-white">{genesisSync.getClientType().toUpperCase()}</p>
             </div>
           </div>
         </div>

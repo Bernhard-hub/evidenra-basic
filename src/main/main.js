@@ -24,7 +24,7 @@ app.commandLine.appendSwitch('--disable-background-timer-throttling');
 app.commandLine.appendSwitch('--force-device-scale-factor', '1');
 
 function createWindow() {
-  console.log('Creating EVIDENRA BASIC v7.6 window...');
+  console.log('Creating EVIDENRA BASIC v1.1.0 window...');
 
   // Determine correct icon path based on environment
   const iconPath = process.env.NODE_ENV === 'development'
@@ -43,14 +43,14 @@ function createWindow() {
       webSecurity: false, // Allow external API calls for research features
       preload: path.join(__dirname, '../preload/preload.js')
     },
-    title: 'EVIDENRA BASIC v7.6',
+    title: 'EVIDENRA BASIC v1.1.0',
     autoHideMenuBar: true,
     show: false
   });
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    console.log('EVIDENRA BASIC v7.6 ready!');
+    console.log('EVIDENRA BASIC v1.1.0 ready!');
     
     // Clear all caches on startup
     mainWindow.webContents.session.clearCache().then(() => {
@@ -109,7 +109,7 @@ function createWindow() {
 </head>
 <body>
     <div class="container">
-        <h1>EVIDENRA BASIC v7.6</h1>
+        <h1>EVIDENRA BASIC v1.1.0</h1>
         <div class="error">
             <h2>Application Loading...</h2>
             <p>The main application is being initialized.</p>
@@ -139,9 +139,9 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  console.log('EVIDENRA BASIC v7.6 - Starting...');
+  console.log('EVIDENRA BASIC v1.1.0 - Starting...');
 
-  // V7.6: Always create window immediately - authentication via beautiful CloudLoginModal in React
+  // V1.0: Always create window immediately - authentication via beautiful CloudLoginModal in React
   // No more ugly system dialogs - the app handles login/trial internally with beautiful UI
   createWindow();
 });

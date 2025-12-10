@@ -165,12 +165,20 @@ export const profileService = {
   }> {
     const { data: profile } = await supabase
       .from('users')
-      .select('subscription, trial_start')
+      .select('subscription, trial_start, email')
       .eq('id', userId)
       .single()
 
     if (!profile) {
       return { status: 'expired', daysRemaining: 0, canUse: false }
+    }
+
+    
+    // Admin-Bypass: Admins haben immer vollen Zugriff
+    const ADMIN_EMAILS = ['bernhard.strobl@kph-es.at', 'b.strobl@hotmail.com']
+    if (profile.email && ADMIN_EMAILS.includes(profile.email.toLowerCase())) {
+      console.log('[EVIDENRA] Admin-Bypass aktiviert fuer:', profile.email)
+      return { status: 'premium', daysRemaining: -1, canUse: true }
     }
 
     if (profile.subscription === 'premium') {

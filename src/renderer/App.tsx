@@ -76,6 +76,7 @@ import { Statistics } from '../services/Statistics'; // 🚀 REVOLUTION: Scienti
 import { ContinuationService } from '../services/ContinuationService'; // 🚀 PHASE 2: Completion Guarantee
 import { AKIHMethodology } from './services/AKIHMethodology'; // 🚀 REVOLUTION: Formalized Method
 import { ExportService } from '../services/ExportService'; // 🚀 V36: Universal Export Service
+import { CodingExportDialog } from '../components/export/CodingExportDialog'; // 🚀 V1.1.0: Scientific Context Export
 import { RealMethodologyService } from '../services/RealMethodologyService'; // 🚀 V40: ECHTE Methodologie (KEINE Halluzinationen!)
 import { GenesisIntegration } from '../../genesis-engine/src/GenesisIntegration.js'; // 🧬 V1.0.Genesis: Self-evolving AI
 import { GenesisDashboard } from '../../genesis-engine/src/ui/GenesisDashboard.jsx'; // 🧬 V1.0.Genesis: Live monitoring (includes GAPES)
@@ -1944,6 +1945,27 @@ const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): T =
   }) as T;
 };
 
+// Helper function to get context around coded text from the original document
+const getContextAroundText = (documentContent: string, codedText: string, contextWords: number = 30): { before: string; after: string } | null => {
+  if (!documentContent || !codedText) return null;
+
+  const index = documentContent.indexOf(codedText);
+  if (index === -1) return null;
+
+  // Get text before the coded segment
+  const textBefore = documentContent.substring(0, index);
+  const wordsBefore = textBefore.split(/\s+/).slice(-contextWords).join(' ');
+
+  // Get text after the coded segment
+  const textAfter = documentContent.substring(index + codedText.length);
+  const wordsAfter = textAfter.split(/\s+/).slice(0, contextWords).join(' ');
+
+  return {
+    before: wordsBefore.trim(),
+    after: wordsAfter.trim()
+  };
+};
+
 const throttle = <T extends (...args: any[]) => any>(func: T, limit: number): T => {
   let lastFunc: NodeJS.Timeout;
   let lastRan: number;
@@ -3653,6 +3675,7 @@ export default function EvidenraApp() {
   const [genesisStats, setGenesisStats] = useState<any>(null);
   const [showGenesisDashboard, setShowGenesisDashboard] = useState<boolean>(false);
   const [genesisAPIWrapper, setGenesisAPIWrapper] = useState<any>(null); // 🧬 V2.0: GAPES Wrapper
+  const [showCodingExportDialog, setShowCodingExportDialog] = useState<boolean>(false); // 🚀 V1.1.0: Scientific Context Export
 
   // 🛠️ EVIDENRA RETRY COUNTER - Begrenzt endlose Retry-Schleifen
   const [evidenraRetryCount, setEvidenraRetryCount] = useState(0);
@@ -10137,7 +10160,7 @@ ${citationValidation.hallucinations.length > 10 ? `\n*... and ${citationValidati
               <h1 className="text-display gradient-text-primary mb-1">
                 EVIDENRA Basic
               </h1>
-              <p className="text-xs text-white text-opacity-60 font-medium">Basic v7.6</p>
+              <p className="text-xs text-white text-opacity-60 font-medium">Basic v1.1.0</p>
               <div className="mt-2 flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${systemStatus?.status === 'online' ? 'bg-green-400' : 'bg-red-400'} animate-pulse`}></div>
                 <span className="text-xs text-white text-opacity-70">
@@ -10977,7 +11000,12 @@ ${citationValidation.hallucinations.length > 10 ? `\n*... and ${citationValidati
                             </div>
                           )}
                         </div>
-                        
+                        {apiSettings.provider !== 'ollama' && (
+                          <p className="text-xs text-white text-opacity-50 mt-1">
+                            {language === 'de' ? 'Tipp: Strg+V zum Einfügen' : 'Tip: Ctrl+V to paste'}
+                          </p>
+                        )}
+
                         {/* Claude Cost Estimation */}
                         {apiSettings.provider === 'anthropic' && apiSettings.apiKey && (
                           <div className="mt-3 bg-green-500 bg-opacity-10 border border-green-400 border-opacity-30 rounded-2xl p-3">
@@ -13532,9 +13560,24 @@ ${documentText}`
                           </div>
                           
                           <div className="bg-white bg-opacity-5 rounded-2xl p-3 mb-4">
-                            <p className="text-white text-opacity-90 leading-relaxed italic">
-                              "{coding.text}"
-                            </p>
+                            {/* Kodierung mit Kontext anzeigen */}
+                            {(() => {
+                              const doc = project.documents.find(d => d.id === coding.documentId);
+                              const context = doc ? getContextAroundText(doc.content, coding.text, 20) : null;
+                              return (
+                                <p className="text-white text-opacity-90 leading-relaxed">
+                                  {context?.before && (
+                                    <span className="text-white text-opacity-40">...{context.before} </span>
+                                  )}
+                                  <span className="bg-yellow-500 bg-opacity-20 border-l-2 border-yellow-400 px-1 italic font-medium">
+                                    "{coding.text}"
+                                  </span>
+                                  {context?.after && (
+                                    <span className="text-white text-opacity-40"> {context.after}...</span>
+                                  )}
+                                </p>
+                              );
+                            })()}
                             {/* Deutsche Begründung hinzufügen */}
                             <div className="mt-3 pt-3 border-t border-white border-opacity-10">
                               <div className="flex items-start gap-2">
@@ -15661,14 +15704,55 @@ ${project.evidenraReport.content.replace(/\n/g, '<br>').replace(/##\s*(.+)/g, '<
                   </div>
                 </div>
 
+                {/* 🚀 NEW: SCIENTIFIC CODING EXPORT WITH CONTEXT */}
+                <div className="premium-card p-8 border-2 border-indigo-500/50">
+                  <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
+                    <FileText className="w-6 h-6 text-indigo-400" />
+                    📋 Kodierungen mit Kontext exportieren
+                    <span className="text-xs bg-indigo-600 text-white px-2 py-1 rounded-full">NEU v1.1.0</span>
+                  </h3>
+                  <p className="text-white/60 text-sm mb-6">
+                    Wissenschaftlich nachvollziehbar: Kodierte Stellen mit Kontext, Zeilennummern und Metadaten
+                  </p>
+
+                  <div className="bg-gradient-to-r from-indigo-900/30 to-purple-900/30 rounded-xl p-6 border border-indigo-500/40">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="bg-indigo-500/20 p-4 rounded-xl">
+                          <Download className="w-10 h-10 text-indigo-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-xl font-bold text-white mb-1">Kodierungen exportieren</h4>
+                          <p className="text-white/60 text-sm">
+                            {project.codings?.length || 0} Kodierungen • Wählbarer Kontext (±50/150 Wörter, Absatz, etc.) • MD, HTML, ATLAS.ti, MAXQDA
+                          </p>
+                          <div className="flex gap-2 mt-2">
+                            <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded">✓ Mit Kontext</span>
+                            <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">✓ Zeilennummern</span>
+                            <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded">✓ Andere Codes</span>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowCodingExportDialog(true)}
+                        disabled={!project.codings?.length}
+                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl text-white px-8 py-4 transition-all flex items-center gap-3 text-lg font-bold shadow-lg hover:shadow-xl"
+                      >
+                        <Download className="w-6 h-6" />
+                        Export-Dialog öffnen
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* 🔬 SECTION 2: QDA TOOL EXPORTS */}
                 <div className="premium-card p-8">
                   <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
                     <Cpu className="w-6 h-6 text-purple-400" />
-                    🔬 QDA-Tool Export
+                    🔬 QDA-Tool Export (Schnell-Export ohne Kontext)
                   </h3>
                   <p className="text-white/60 text-sm mb-6">
-                    Exportieren Sie Ihr Projekt für professionelle qualitative Datenanalyse-Software
+                    Schneller Export für QDA-Software (ohne Kontext-Einstellungen)
                   </p>
 
                   <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -15859,6 +15943,13 @@ ${project.evidenraReport.content.replace(/\n/g, '<br>').replace(/##\s*(.+)/g, '<
       {/* ☁️ Cloud Sync Modals */}
       <CloudLoginModal />
       <CloudSyncStatusModal />
+
+      {/* 🚀 V1.1.0: Scientific Coding Export Dialog */}
+      <CodingExportDialog
+        isOpen={showCodingExportDialog}
+        onClose={() => setShowCodingExportDialog(false)}
+        project={project}
+      />
 
     </div>
   );

@@ -126,6 +126,7 @@ export function GenesisSyncProvider({ children }: GenesisSyncProviderProps) {
           await genesisSync.initialize(session.user);
           if (mounted) {
             setIsCloudEnabled(true);
+          }
         } else if (mounted) {
           // No session - show login modal on first start
           const skipped = sessionStorage.getItem('evidenra_login_skipped');

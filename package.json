@@ -1,6 +1,6 @@
 {
   "name": "evidenra-basic",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "EVIDENRA BASIC - Qualitative Datenanalyse mit KI",
   "main": "src/main/main.js",
   "scripts": {
@@ -41,6 +41,7 @@
     "electron": "^37.4.0",
     "electron-builder": "^26.0.12",
     "html-webpack-plugin": "^5.6.4",
+    "pg": "^8.16.3",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.2",
     "webpack": "^5.101.3",

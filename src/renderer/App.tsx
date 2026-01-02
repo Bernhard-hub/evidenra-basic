@@ -63,6 +63,7 @@ import { MetaIntelligence, MetaProcessing } from '../types/metaIntelligence';
 import * as pdfjsLib from 'pdfjs-dist';
 import APIService, { type APIMessage } from '../services/APIService';
 import { akihService, type AKIHScore } from './akihService';
+import { APP_VERSION, APP_VERSION_DISPLAY, PRODUCT_NAME } from './config/appConfig';
 import { ScientificArticleService } from './services/ScientificArticleService';
 import { SemanticAnalysisService } from './services/SemanticAnalysisService';
 import { CitationValidatorUltra } from './services/CitationValidatorUltra';
@@ -10160,7 +10161,7 @@ ${citationValidation.hallucinations.length > 10 ? `\n*... and ${citationValidati
               <h1 className="text-display gradient-text-primary mb-1">
                 EVIDENRA Basic
               </h1>
-              <p className="text-xs text-white text-opacity-60 font-medium">Basic v1.1.0</p>
+              <p className="text-xs text-white text-opacity-60 font-medium">{PRODUCT_NAME} {APP_VERSION_DISPLAY}</p>
               <div className="mt-2 flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${systemStatus?.status === 'online' ? 'bg-green-400' : 'bg-red-400'} animate-pulse`}></div>
                 <span className="text-xs text-white text-opacity-70">
@@ -15709,7 +15710,7 @@ ${project.evidenraReport.content.replace(/\n/g, '<br>').replace(/##\s*(.+)/g, '<
                   <h3 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
                     <FileText className="w-6 h-6 text-indigo-400" />
                     📋 Kodierungen mit Kontext exportieren
-                    <span className="text-xs bg-indigo-600 text-white px-2 py-1 rounded-full">NEU v1.1.0</span>
+                    <span className="text-xs bg-indigo-600 text-white px-2 py-1 rounded-full">NEU {APP_VERSION_DISPLAY}</span>
                   </h3>
                   <p className="text-white/60 text-sm mb-6">
                     Wissenschaftlich nachvollziehbar: Kodierte Stellen mit Kontext, Zeilennummern und Metadaten

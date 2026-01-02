@@ -7502,7 +7502,7 @@ Erstelle jetzt das Kapitel "${chapter.name}" mit ${chapter.targetWords} Wörtern
       const result = await ScientificArticleService.generateEnhancedDataReport(
         project,
         apiSettings,
-        'de',
+        language,
         genesisAPIWrapper
       );
 
@@ -9142,7 +9142,7 @@ Entwickle daraus einen wissenschaftlich fundierten Meta-Prompt für publikations
         const ultimateResult = await UltimateReportService.generateUltimateReport(
           project,
           apiSettings,
-          'de',
+          language,
           'ENHANCED',
           undefined,
           (status) => {
@@ -9728,7 +9728,7 @@ ${citationValidation.hallucinations.length > 10 ? `\n*... and ${citationValidati
       const result = await EvidenraBasisReportService.generateEvidenraMethodologyReport(
         evidenraProcessData,
         apiSettings,
-        'de',
+        language,
         (status) => {
           setEvidenraMethodologyProcessing(prev => ({
             ...prev,

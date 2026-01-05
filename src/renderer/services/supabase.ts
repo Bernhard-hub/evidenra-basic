@@ -1,8 +1,9 @@
 import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js'
+import { getSupabaseUrl, getSupabaseAnonKey } from '../../config/runtime';
 
 // Supabase Configuration - EVIDENRA Basic (shared with PWA)
-const supabaseUrl = 'https://zvkoulhziksfxnxkkrmb.supabase.co'
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2a291bGh6aWtzZnhueGtrcm1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MTE3NjQsImV4cCI6MjA3OTk4Nzc2NH0.GJ82Zp37DXICVDvhmjSGo6THSmYcSuykRVgN3z4WWW0'
+const supabaseUrl = getSupabaseUrl();
+const supabaseAnonKey = getSupabaseAnonKey();
 
 // Create Supabase client with Electron-compatible settings
 export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -12,10 +13,7 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
     detectSessionInUrl: false, // Disabled for Electron - no URL-based auth
     flowType: 'pkce',
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    lock: {
-      // Disable lock manager in Electron (causes warnings)
-      acquireLock: false,
-    } as unknown as undefined, // Type workaround for Electron compatibility
+    
   },
 })
 
@@ -79,20 +77,35 @@ export interface Coding {
 
 // Auth Functions
 export const authService = {
-  // Send Magic Link
-  async sendMagicLink(email: string): Promise<{ error: Error | null }> {
-    // Redirect URL for Basic app
-    const redirectUrl = `${window.location.origin}/auth/callback`
-
-    console.log('[EVIDENRA Basic] Magic link redirect URL:', redirectUrl)
+  // Send OTP Code (6-digit code via email - no browser redirect needed)
+  async sendOTPCode(email: string): Promise<{ error: Error | null }> {
+    console.log('[EVIDENRA] Sending OTP code to:', email)
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: redirectUrl,
+        shouldCreateUser: true,
+        // No emailRedirectTo = sends 6-digit code instead of magic link
       },
     })
     return { error }
+  },
+
+  // Verify OTP Code
+  async verifyOTPCode(email: string, token: string): Promise<{ error: Error | null; session: Session | null }> {
+    console.log('[EVIDENRA] Verifying OTP code for:', email)
+
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email',
+    })
+    return { error, session: data.session }
+  },
+
+  // Legacy: Send Magic Link (kept for compatibility)
+  async sendMagicLink(email: string): Promise<{ error: Error | null }> {
+    return this.sendOTPCode(email)
   },
 
   // Get current session

@@ -128,11 +128,8 @@ export function GenesisSyncProvider({ children }: GenesisSyncProviderProps) {
             setIsCloudEnabled(true);
           }
         } else if (mounted) {
-          // No session - show login modal on first start
-          const skipped = sessionStorage.getItem('evidenra_login_skipped');
-          if (!skipped) {
-            setShowLoginModal(true);
-          }
+          // No session - don't auto-popup, user can click sync button in header
+          // Login modal only opens when user clicks the sync button
         }
       } catch (error) {
         console.error('[GenesisSyncProvider] Init error:', error);
@@ -314,15 +311,20 @@ export function useGenesisSyncContext(): GenesisSyncContextType {
 export function CloudSyncIndicator() {
   const { isCloudEnabled, syncStatus, user, setShowLoginModal, setShowSyncStatus } = useGenesisSyncContext();
 
+  // Tooltip explaining sync benefits
+  const syncTooltip = 'Cloud Sync: Projekte zwischen Web-App, Desktop und Geräten synchronisieren. Optional - für lokale Nutzung nicht nötig.';
+
   if (!isCloudEnabled || !user) {
     return (
       <button
         onClick={() => setShowLoginModal(true)}
-        className="flex items-center gap-2 px-3 py-1.5 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 rounded-lg text-sm transition-all"
-        title="Cloud Sync aktivieren"
+        className="flex items-center gap-2 px-3 py-2 bg-gray-800/60 backdrop-blur-xl border border-gray-600/30 rounded-2xl text-white hover:bg-gray-700/80 transition-all duration-300 hover:scale-105"
+        title={syncTooltip}
       >
-        <span className="w-2 h-2 rounded-full bg-gray-500" />
-        <span className="text-gray-400">Offline</span>
+        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+        </svg>
+        <span className="text-gray-300">Cloud Sync</span>
       </button>
     );
   }
@@ -359,23 +361,46 @@ export function CloudSyncIndicator() {
 export function CloudLoginModal() {
   const { showLoginModal, setShowLoginModal, sendMagicLink, isAuthenticated } = useGenesisSyncContext();
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [otpCode, setOtpCode] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'code_sent' | 'verifying' | 'error'>('idle');
   const [error, setError] = useState('');
 
   if (!showLoginModal || isAuthenticated) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
 
     setStatus('sending');
+    setError('');
     const result = await sendMagicLink(email);
 
     if (result.success) {
-      setStatus('sent');
+      setStatus('code_sent');
     } else {
       setStatus('error');
       setError(result.error || 'Fehler beim Senden');
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode.trim() || otpCode.length < 6) return;
+
+    setStatus('verifying');
+    setError('');
+
+    try {
+      const { authService } = await import('../services/supabase');
+      const result = await authService.verifyOTPCode(email, otpCode);
+
+      if (result.error) {
+        setStatus('error');
+        setError(result.error.message || 'Ungültiger Code');
+      }
+    } catch (err: any) {
+      setStatus('error');
+      setError(err.message || 'Verifizierung fehlgeschlagen');
     }
   };
 
@@ -388,29 +413,84 @@ export function CloudLoginModal() {
             Genesis Cloud Sync
           </h2>
           <button
-            onClick={() => setShowLoginModal(false)}
+            onClick={() => {
+              setShowLoginModal(false);
+              setStatus('idle');
+              setEmail('');
+              setOtpCode('');
+              setError('');
+            }}
             className="text-gray-400 hover:text-white transition-colors"
           >
             ✕
           </button>
         </div>
 
-        {status === 'sent' ? (
-          <div className="text-center py-8">
-            <div className="text-5xl mb-4">📧</div>
-            <h3 className="text-lg font-semibold text-white mb-2">Magic Link gesendet!</h3>
-            <p className="text-gray-400 mb-4">
-              Prüfe deine E-Mail ({email}) und klicke auf den Link um dich anzumelden.
-            </p>
-            <button
-              onClick={() => {
-                setStatus('idle');
-                setEmail('');
-              }}
-              className="text-blue-400 hover:text-blue-300 text-sm"
-            >
-              Andere E-Mail verwenden
-            </button>
+        {status === 'code_sent' || status === 'verifying' || (status === 'error' && otpCode) ? (
+          <div className="py-4">
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-4">🔐</div>
+              <h3 className="text-lg font-semibold text-white mb-2">Code eingeben</h3>
+              <p className="text-gray-400 text-sm">
+                Wir haben einen 6-stelligen Code an <span className="text-white">{email}</span> gesendet.
+              </p>
+            </div>
+
+            <form onSubmit={handleVerifyCode} className="space-y-4">
+              <div>
+                <input
+                  type="text"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  maxLength={6}
+                  className="w-full px-4 py-4 bg-gray-800 border border-gray-700 rounded-lg text-white text-center text-2xl tracking-widest placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors font-mono"
+                  disabled={status === 'verifying'}
+                  autoFocus
+                />
+              </div>
+
+              {status === 'error' && error && (
+                <p className="text-red-400 text-sm text-center">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={status === 'verifying' || otpCode.length < 6}
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {status === 'verifying' ? 'Prüfe...' : 'Bestätigen'}
+              </button>
+            </form>
+
+            <div className="mt-4 pt-4 border-t border-gray-800 flex justify-between">
+              <button
+                onClick={() => {
+                  setStatus('idle');
+                  setOtpCode('');
+                  setError('');
+                }}
+                className="text-gray-400 hover:text-white text-sm transition-colors"
+              >
+                ← Andere E-Mail
+              </button>
+              <button
+                onClick={async () => {
+                  setStatus('sending');
+                  const result = await sendMagicLink(email);
+                  if (result.success) {
+                    setStatus('code_sent');
+                    setOtpCode('');
+                  } else {
+                    setStatus('error');
+                    setError('Erneut senden fehlgeschlagen');
+                  }
+                }}
+                className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
+              >
+                Code erneut senden
+              </button>
+            </div>
           </div>
         ) : (
           <>
@@ -418,7 +498,7 @@ export function CloudLoginModal() {
               Melde dich an um deine Projekte zwischen allen Geräten und Apps zu synchronisieren.
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSendCode} className="space-y-4">
               <div>
                 <label className="block text-sm text-gray-400 mb-1">E-Mail Adresse</label>
                 <input
@@ -431,7 +511,7 @@ export function CloudLoginModal() {
                 />
               </div>
 
-              {status === 'error' && (
+              {status === 'error' && !otpCode && (
                 <p className="text-red-400 text-sm">{error}</p>
               )}
 
@@ -440,16 +520,15 @@ export function CloudLoginModal() {
                 disabled={status === 'sending' || !email.trim()}
                 className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {status === 'sending' ? 'Sende...' : 'Magic Link senden'}
+                {status === 'sending' ? 'Sende Code...' : 'Code senden'}
               </button>
             </form>
 
             <div className="mt-4 pt-4 border-t border-gray-800">
               <p className="text-gray-500 text-xs text-center mb-3">
-                Kein Passwort nötig - du erhältst einen sicheren Login-Link per E-Mail.
+                Du erhältst einen 6-stelligen Code per E-Mail - kein Passwort nötig.
               </p>
 
-              {/* Skip Login Button */}
               <button
                 onClick={() => {
                   sessionStorage.setItem('evidenra_login_skipped', 'true');
@@ -461,7 +540,6 @@ export function CloudLoginModal() {
               </button>
             </div>
 
-            {/* Benefits Info */}
             <div className="mt-4 p-3 bg-gray-800/50 rounded-lg">
               <p className="text-xs text-gray-400 mb-2 font-medium">Mit Login kannst du:</p>
               <ul className="text-xs text-gray-500 space-y-1">

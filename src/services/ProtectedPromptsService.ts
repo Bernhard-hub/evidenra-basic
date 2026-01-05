@@ -6,6 +6,7 @@
  */
 
 import { supabase } from '../renderer/services/supabase';
+import { getSupabaseUrl, getSupabaseAnonKey } from '../config/runtime';
 
 // Types
 export interface ExpertPersona {
@@ -42,7 +43,7 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
  * Service zum Abrufen geschützter Prompts vom Server
  */
 export class ProtectedPromptsService {
-  private static supabaseUrl = 'https://zvkoulhziksfxnxkkrmb.supabase.co';
+  private static supabaseUrl = '" + getSupabaseUrl() + "';
   private static functionName = 'protected-prompts';
 
   /**

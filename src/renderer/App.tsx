@@ -78,6 +78,7 @@ import { ContinuationService } from '../services/ContinuationService'; // 🚀 P
 import { AKIHMethodology } from './services/AKIHMethodology'; // 🚀 REVOLUTION: Formalized Method
 import { ExportService } from '../services/ExportService'; // 🚀 V36: Universal Export Service
 import { CodingExportDialog } from '../components/export/CodingExportDialog'; // 🚀 V1.1.0: Scientific Context Export
+import { TrialExpiredModal } from './components/TrialExpiredModal'; // Trial blocking modal
 import { RealMethodologyService } from '../services/RealMethodologyService'; // 🚀 V40: ECHTE Methodologie (KEINE Halluzinationen!)
 import { GenesisIntegration } from '../../genesis-engine/src/GenesisIntegration.js'; // 🧬 V1.0.Genesis: Self-evolving AI
 import { GenesisDashboard } from '../../genesis-engine/src/ui/GenesisDashboard.jsx'; // 🧬 V1.0.Genesis: Live monitoring (includes GAPES)
@@ -10097,8 +10098,43 @@ ${citationValidation.hallucinations.length > 10 ? `\n*... and ${citationValidati
     return t('trial.expired', {}, language);
   }, [license, language]);
 
+  // Check if trial is expired and no valid license
+  const isTrialExpired = !license.isValid && !license.trial.isValid;
+
+  // Handle license validation from modal
+  const handleLicenseFromModal = async (key: string): Promise<boolean> => {
+    try {
+      const result = await (window as any).electronAPI?.validateLicense?.(key);
+      if (result?.valid) {
+        setLicense(prev => ({
+          ...prev,
+          key: key,
+          isValid: true,
+          expiry: result.expiry
+        }));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("License validation error:", error);
+      return false;
+    }
+  };
+
+  // Handle purchase redirect
+  const handlePurchase = () => {
+    window.open("https://evidenra.gumroad.com", "_blank");
+  };
+
   return (
     <div className="app-wrapper h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900 text-white flex relative overflow-hidden">
+      {/* Trial Expired Modal - blocks app when trial expired */}
+      <TrialExpiredModal
+        isOpen={isTrialExpired}
+        language={language}
+        onLicenseEnter={handleLicenseFromModal}
+        onPurchase={handlePurchase}
+      />
       {/* Revolutionäre animierte Hintergrundeffekte */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-4 -left-4 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>

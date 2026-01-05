@@ -1,6 +1,6 @@
 {
   "name": "evidenra-basic",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "EVIDENRA BASIC - Qualitative Datenanalyse mit KI",
   "main": "src/main/main.js",
   "scripts": {
@@ -37,16 +37,19 @@
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "app-builder-bin": "^5.0.0-alpha.12",
+    "asarmor": "^3.0.2",
     "babel-loader": "^10.0.0",
     "electron": "^37.4.0",
     "electron-builder": "^26.0.12",
     "html-webpack-plugin": "^5.6.4",
+    "javascript-obfuscator": "^5.1.0",
     "pg": "^8.16.3",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.2",
     "webpack": "^5.101.3",
     "webpack-cli": "^6.0.1",
-    "webpack-dev-server": "^5.2.2"
+    "webpack-dev-server": "^5.2.2",
+    "webpack-obfuscator": "^3.6.0"
   },
   "dependencies": {
     "@capacitor/android": "^6.0.0",
@@ -79,7 +82,7 @@
     "appId": "com.evidenra.basic",
     "productName": "EVIDENRA BASIC",
     "directories": {
-      "output": "releases/2026-01-02"
+      "output": "releases/2026-01-05"
     },
     "win": {
       "icon": "Logo.ico",
@@ -129,7 +132,9 @@
       "src/preload/**/*",
       "package.json",
       "!node_modules/@napi-rs/**/*",
-      "!node_modules/@capacitor/**/*"
+      "!node_modules/@capacitor/**/*",
+      "!node_modules/@napi-rs/canvas-*/**/*",
+      "!node_modules/@napi-rs/canvas-android-arm64/**/*"
     ],
     "extraMetadata": {
       "main": "src/main/main.js"
@@ -149,6 +154,7 @@
     },
     "electronDownload": {
       "cache": ".electron-cache"
-    }
+    },
+    "afterPack": "./scripts/afterPack.js"
   }
 }

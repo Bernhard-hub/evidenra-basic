@@ -1,6 +1,8 @@
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('path');
 const LicenseValidator = require('./licenseValidator');
+const packageJson = require('../../package.json');
+const APP_VERSION = packageJson.version;
 
 let mainWindow;
 let licenseValidator;
@@ -24,15 +26,16 @@ app.commandLine.appendSwitch('--disable-background-timer-throttling');
 app.commandLine.appendSwitch('--force-device-scale-factor', '1');
 
 function createWindow() {
-  console.log('Creating EVIDENRA BASIC v1.1.0 window...');
-
-  // Determine correct icon path based on environment
-  const iconPath = process.env.NODE_ENV === 'development'
-    ? path.join(__dirname, '../../Logo.ico')
+  console.log(`Creating EVIDENRA BASIC v${APP_VERSION} window...`);
+    // Determine correct icon path based on environment
+  const isDev = (process.env.NODE_ENV || '').trim() === 'development';
+  // Use __dirname to get the correct path relative to this file
+  const iconPath = isDev
+    ? path.resolve(__dirname, '../../Logo.ico')
     : path.join(process.resourcesPath, 'Logo.ico');
 
   console.log('Loading icon from:', iconPath);
-
+  
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -43,14 +46,14 @@ function createWindow() {
       webSecurity: false, // Allow external API calls for research features
       preload: path.join(__dirname, '../preload/preload.js')
     },
-    title: 'EVIDENRA BASIC v1.1.0',
+    title: `EVIDENRA BASIC v${APP_VERSION}`,
     autoHideMenuBar: true,
     show: false
   });
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    console.log('EVIDENRA BASIC v1.1.0 ready!');
+    console.log(`EVIDENRA BASIC v${APP_VERSION} ready!`);
     
     // Clear all caches on startup
     mainWindow.webContents.session.clearCache().then(() => {
@@ -61,10 +64,12 @@ function createWindow() {
   });
 
   // Load the application
-  const isDev = process.env.NODE_ENV === 'development';
   
   if (isDev) {
-    mainWindow.loadURL('http://localhost:8080');
+    // Dev mode: load file and open DevTools
+    const devPath = path.join(__dirname, "../../dist/index.html");
+    console.log("Loading HTML from:", devPath);
+    mainWindow.loadFile(devPath);
     mainWindow.webContents.openDevTools();
   } else {
     // ❌ REMOVED: DevTools no longer open automatically
@@ -109,7 +114,7 @@ function createWindow() {
 </head>
 <body>
     <div class="container">
-        <h1>EVIDENRA BASIC v1.1.0</h1>
+        <h1>EVIDENRA BASIC v${APP_VERSION}</h1>
         <div class="error">
             <h2>Application Loading...</h2>
             <p>The main application is being initialized.</p>
@@ -139,7 +144,7 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  console.log('EVIDENRA BASIC v1.1.0 - Starting...');
+  console.log(`EVIDENRA BASIC v${APP_VERSION} - Starting...`);
 
   // V1.0: Always create window immediately - authentication via beautiful CloudLoginModal in React
   // No more ugly system dialogs - the app handles login/trial internally with beautiful UI
